@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebAR - Interferensi & Difraksi Cahaya</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-indigo-700 text-white shadow-md py-3 px-4 flex justify-between items-center">
+        <h1 class="text-sm md:text-base font-bold flex items-center gap-1.5">
+            💡 Simulasi Interferensi & Difraksi Cahaya
+        </h1>
+        <span class="text-[10px] bg-indigo-800 px-2.5 py-1 rounded-full border border-indigo-600">Fisika Digital</span>
+    </header>
+
+    <!-- Main Container -->
+    <div class="flex-1 flex flex-col p-3 gap-3 max-w-2xl mx-auto w-full">
+        
+        <!-- Area Simulasi Canvas (Di atas agar langsung terlihat) -->
+        <div class="bg-gray-900 rounded-xl overflow-hidden relative shadow-md flex flex-col items-center justify-center h-56 w-full">
+            <div class="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] px-2.5 py-1 rounded-full border border-white/10 flex items-center gap-1.5 z-10">
+                <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+                Pola Gelombang & Layar Penangkap
+            </div>
+            
+            <canvas id="simCanvas" class="w-full h-full"></canvas>
+            
+            <div id="simInfoLabel" class="absolute bottom-2 left-2 text-[10px] text-white/90 bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm border border-white/10 z-10">
+                Mode: Interferensi Celah Ganda (Young)
+            </div>
+        </div>
+
+        <!-- Panel LKPD & Kontrol Interaktif -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3 text-sm">
+            <div class="bg-indigo-50 px-3 py-2 rounded-lg border border-indigo-100 flex justify-between items-center">
+                <h2 class="font-semibold text-indigo-950 text-xs md:text-sm">📝 LKPD Berbasis PBL: Gelombang Cahaya</h2>
+                <span class="text-[10px] text-indigo-700 font-medium">Fase 1 & 2: Orientasi & Eksplorasi</span>
+            </div>
+
+            <!-- Panduan LKPD -->
+            <div class="p-3 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg space-y-1 text-xs">
+                <p class="font-semibold text-amber-900">Petunjuk Eksperimen Maya:</p>
+                <p class="text-amber-800">
+                    Ubah jenis eksperimen, panjang gelombang ($\lambda$), dan jarak antar celah ($d$). Amati bagaimana perubahan warna cahaya mempengaruhi jarak pola pita terang-gelap pada layar penangkap di simulasi atas!
+                </p>
+            </div>
+
+            <!-- Pilihan Jenis Eksperimen -->
+            <div>
+                <label class="block font-medium text-gray-700 text-xs mb-1">1. Pilih Jenis Pola Gelombang:</label>
+                <select id="experimentType" class="w-full border border-gray-300 rounded-lg p-1.5 bg-gray-50 text-xs text-gray-800 focus:ring-2 focus:ring-indigo-500">
+                    <option value="young">Interferensi Celah Ganda (Young)</option>
+                    <option value="diffraction">Difraksi Celah Tunggal</option>
+                </select>
+            </div>
+
+            <!-- Slider Panjang Gelombang & Jarak Celah -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                    <div class="flex justify-between items-center mb-1 text-xs">
+                        <label class="font-medium text-gray-700">2. Panjang Gelombang ($\lambda$):</label>
+                        <span id="lambdaVal" class="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">550 nm</span>
+                    </div>
+                    <input type="range" id="lambdaRange" min="380" max="750" value="550" class="w-full accent-indigo-600 cursor-pointer">
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1 text-xs">
+                        <label class="font-medium text-gray-700">3. Jarak Celah ($d$):</label>
+                        <span id="slitVal" class="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">0.05 mm</span>
+                    </div>
+                    <input type="range" id="slitRange" min="0.02" max="0.10" step="0.01" value="0.05" class="w-full accent-indigo-600 cursor-pointer">
+                </div>
+            </div>
+
+            <!-- Hasil Analisis & Perhitungan -->
+            <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2">
+                <h3 class="font-semibold text-gray-900 text-xs border-b pb-1">📊 Hasil Pengamatan & Analisis:</h3>
+                <div class="grid grid-cols-2 gap-2 text-center">
+                    <div class="bg-white p-2 rounded-lg border border-gray-200">
+                        <span class="block text-[10px] text-gray-500">Warna Spektrum Cahaya</span>
+                        <span id="resColorName" class="text-xs font-bold text-indigo-600">Hijau (Green)</span>
+                    </div>
+                    <div class="bg-white p-2 rounded-lg border border-gray-200">
+                        <span class="block text-[10px] text-gray-500">Jarak Antar Pita ($\Delta y$)</span>
+                        <span id="resSpacing" class="text-xs font-bold text-indigo-600">1.10 cm</span>
+                    </div>
+                </div>
+                <div class="text-[11px] text-gray-600 bg-indigo-50/50 p-2 rounded border border-indigo-100 flex justify-between items-center">
+                    <span id="formulaText" class="font-semibold text-indigo-900">Rumus Celah Ganda: d · (y/L) = n · λ</span>
+                    <span class="text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded">PBL Task</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Script Simulasi Canvas & Logika Fisika -->
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const experimentType = document.getElementById('experimentType');
+        const lambdaRange = document.getElementById('lambdaRange');
+        const slitRange = document.getElementById('slitRange');
+        const lambdaVal = document.getElementById('lambdaVal');
+        const slitVal = document.getElementById('slitVal');
+        const resColorName = document.getElementById('resColorName');
+        const resSpacing = document.getElementById('resSpacing');
+        const simInfoLabel = document.getElementById('simInfoLabel');
+        const formulaText = document.getElementById('formulaText');
+
+        function wavelengthToColor(wavelength) {
+            let r, g, b;
+            let colorName = "";
+
+            if (wavelength >= 380 && wavelength < 440) {
+                r = -(wavelength - 440) / (440 - 380); g = 0.0; b = 1.0; colorName = "Ungu (Violet)";
+            } else if (wavelength >= 440 && wavelength < 490) {
+                r = 0.0; g = (wavelength - 440) / (490 - 440); b = 1.0; colorName = "Biru (Blue)";
+            } else if (wavelength >= 490 && wavelength < 510) {
+                r = 0.0; g = 1.0; b = -(wavelength - 510) / (510 - 490); colorName = "Sian (Cyan)";
+            } else if (wavelength >= 510 && wavelength < 580) {
+                r = (wavelength - 510) / (580 - 510); g = 1.0; b = 0.0; colorName = "Hijau (Green)";
+            } else if (wavelength >= 580 && wavelength < 645) {
+                r = 1.0; g = -(wavelength - 645) / (645 - 580); b = 0.0; colorName = "Kuning-Oranye";
+            } else if (wavelength >= 645 && wavelength <= 750) {
+                r = 1.0; g = 0.0; b = 0.0; colorName = "Merah (Red)";
+            } else {
+                r = 1.0; g = 1.0; b = 1.0; colorName = "Putih / Monokromatik";
+            }
+
+            // Intensitas redup di ujung spektrum
+            let factor = 1.0;
+            if (wavelength > 700) factor = 0.3 + 0.7 * (750 - wavelength) / 50;
+            else if (wavelength < 420) factor = 0.3 + 0.7 * (wavelength - 380) / 40;
+
+            r = Math.floor(r * factor * 255);
+            g = Math.floor(g * factor * 255);
+            b = Math.floor(b * factor * 255);
+
+            return { rgb: `rgb(${r}, ${g}, ${b})`, name: colorName, r, g, b };
+        }
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            drawSimulation();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        function drawSimulation() {
+            const width = canvas.width;
+            const height = canvas.height;
+            ctx.clearRect(0, 0, width, height);
+
+            const lambda = parseFloat(lambdaRange.value); // dalam nm
+            const d = parseFloat(slitRange.value); // dalam mm
+            const type = experimentType.value;
+
+            lambdaVal.innerText = lambda + ' nm';
+            slitVal.innerText = d.toFixed(2) + ' mm';
+
+            const colData = wavelengthToColor(lambda);
+            resColorName.innerText = colData.name;
+
+            // Hitung perkiraan jarak antar pita (simulasi proporsional)
+            // dy = (lambda * L) / d
+            let spacing = (lambda * 0.001 / d) * 0.8;
+            resSpacing.innerText = spacing.toFixed(2) + ' cm';
+
+            if (type === 'young') {
+                simInfoLabel.innerText = "Mode: Interferensi Celah Ganda (Young)";
+                formulaText.innerText = "Rumus Celah Ganda: d · (y/L) = n · λ";
+            } else {
+                simInfoLabel.innerText = "Mode: Difraksi Celah Tunggal";
+                formulaText.innerText = "Rumus Celah Tunggal: d · sin(θ) = n · λ";
+            }
+
+            // --- GAMBAR VISUALISASI DI CANVAS ---
+            // 1. Latar belakang ruang gelap
+            ctx.fillStyle = '#0b0f19';
+            ctx.fillRect(0, 0, width, height);
+
+            // 2. Sumber Sinar Laser dari Kiri
+            ctx.strokeStyle = colData.rgb;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(10, height / 2);
+            ctx.lineTo(width * 0.3, height / 2);
+            ctx.stroke();
+
+            // 3. Penghalang Celah (Garis tengah vertikal dengan celah)
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(width * 0.3, 20, 4, height - 40);
+            
+            // Gambar lubang celah
+            ctx.fillStyle = '#0b0f19';
+            if (type === 'young') {
+                ctx.fillRect(width * 0.3 - 1, height / 2 - 12, 6, 6);
+                ctx.fillRect(width * 0.3 - 1, height / 2 + 6, 6, 6);
+            } else {
+                ctx.fillRect(width * 0.3 - 1, height / 2 - 8, 6, 16);
+            }
+
+            // 4. Pola Gelombang / Sinar menyebar ke layar kanan
+            const gradX = width * 0.75;
+            const screenX = width * 0.85;
+
+            // 5. Layar Penangkap di Sebelah Kanan (Menampilkan Pola Terang-Gelap)
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(screenX - 10, 20, 20, height - 40);
+
+            // Render gradasi intensitas cahaya pada layar
+            const steps = height - 40;
+            for (let y = 0; y < steps; y++) {
+                const actualY = y + 20;
+                const centerOffset = (actualY - height / 2) / (height * 0.1);
+                
+                let intensity = 0;
+                if (type === 'young') {
+                    // Pola interferensi celah ganda (cos^2)
+                    let beta = centerOffset * (0.1 / d) * (700 / lambda);
+                    intensity = Math.pow(Math.cos(beta), 2) * Math.max(0, 1 - Math.abs(centerOffset) / 4);
+                } else {
+                    // Pola difraksi celah tunggal (sinc^2)
+                    let alpha = centerOffset * (0.15 / d) * (700 / lambda);
+                    intensity = alpha === 0 ? 1 : Math.pow(Math.sin(alpha) / alpha, 2);
+                    intensity = Math.max(0, intensity);
+                }
+
+                // Warnai piksel layar sesuai warna spektrum dikali intensitas
+                ctx.fillStyle = `rgba(${colData.r}, ${colData.g}, ${colData.b}, ${intensity.toFixed(2)})`;
+                ctx.fillRect(screenX - 8, actualY, 16, 1);
+            }
+
+            // Garis penghubung sinar menyebar tipis
+            ctx.strokeStyle = `rgba(${colData.r}, ${colData.g}, ${colData.b}, 0.15)`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(width * 0.35, height / 2);
+            ctx.lineTo(screenX - 10, 30);
+            ctx.moveTo(width * 0.35, height / 2);
+            ctx.lineTo(screenX - 10, height - 30);
+            ctx.stroke();
+        }
+
+        experimentType.addEventListener('change', drawSimulation);
+        lambdaRange.addEventListener('input', drawSimulation);
+        slitRange.addEventListener('input', drawSimulation);
+
+        // Jalankan saat pertama kali dimuat
+        resizeCanvas();
+    </script>
+</body>
+</html>
